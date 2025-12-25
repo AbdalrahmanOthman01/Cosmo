@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosmo | Advanced Neural Command</title>
+    <!-- Global Tech Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Plus+Jakarta+Sans:wght@300;400;700;800&display=swap" rel="stylesheet">
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --accent: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.4);
+            --bg: #020617;
+            --glass: rgba(255, 255, 255, 0.02);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --text-main: #ffffff;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --purple: #a855f7;
+            --info: #0ea5e9;
+            --nav-bg: rgba(15, 23, 42, 0.7);
+        }
+
+        /* Light Mode Overrides */
+        body.light-mode {
+            --bg: #f8fafc;
+            --glass: rgba(255, 255, 255, 0.7);
+            --border-glass: rgba(0, 0, 0, 0.08);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --nav-bg: rgba(255, 255, 255, 0.8);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: background-color 0.4s ease, color 0.4s ease;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(59, 130, 246, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(16, 185, 129, 0.05) 0%, transparent 40%);
+        }
+
+        body.light-mode {
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(59, 130, 246, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(16, 185, 129, 0.08) 0%, transparent 40%);
+        }
+
+        body::after {
+            content: "";
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.03; pointer-events: none; z-index: 9999;
+        }
+
+        /* --- Navigation --- */
+        nav {
+            position: fixed; top: 25px; left: 50%; transform: translateX(-50%);
+            background: var(--nav-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass); border-radius: 100px; padding: 8px;
+            display: flex; gap: 5px; z-index: 1000; box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            transition: background 0.3s ease;
+        }
+
+        .nav-link {
+            color: var(--text-muted); text-decoration: none; font-size: 0.75rem; font-weight: 700;
+            padding: 10px 18px; border-radius: 100px; transition: 0.3s; cursor: pointer; text-transform: uppercase;
+        }
+
+        .nav-link.active { background: var(--accent); color: #fff; box-shadow: 0 8px 15px var(--accent-glow); }
+        
+        .theme-toggle {
+            width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: var(--text-muted); transition: 0.3s; border: 1px solid var(--border-glass);
+        }
+        .theme-toggle:hover { background: var(--accent); color: white; }
+
+        main { padding: 130px 5% 60px; max-width: 1400px; margin: 0 auto; }
+
+        .page-section { display: none; animation: fadeIn 0.6s ease forwards; }
+        .page-section.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- UI Elements --- */
+        .panel {
+            background: var(--glass); backdrop-filter: blur(15px); border: 1px solid var(--border-glass);
+            border-radius: 28px; padding: 24px; transition: 0.3s ease; display: flex; flex-direction: column;
+            height: 100%; position: relative;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.05);
+        }
+
+        .panel-title {
+            font-family: 'Orbitron', sans-serif; font-size: 0.65rem; letter-spacing: 1.2px;
+            color: var(--text-main); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; text-transform: uppercase;
+        }
+        .panel-title i { color: var(--accent); }
+
+        /* --- TELEMETRY BENTO GRID --- */
+        .telemetry-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: minmax(160px, auto); gap: 20px;
+        }
+        .sensor-card {
+            background: var(--glass); border: 1px solid var(--border-glass); border-radius: 24px;
+            padding: 20px; display: flex; flex-direction: column; justify-content: space-between; transition: 0.3s ease;
+        }
+        .sensor-card:hover { transform: translateY(-5px); border-color: var(--accent); }
+        .featured { grid-column: span 2; }
+        .sensor-top { display: flex; justify-content: space-between; align-items: flex-start; }
+        .sensor-icon { width: 45px; height: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); }
+        .sensor-label { font-size: 0.65rem; text-transform: uppercase; color: var(--text-muted); font-weight: 800; letter-spacing: 1px; }
+        .sensor-value { font-family: 'Orbitron', sans-serif; font-size: 1.6rem; color: var(--text-main); margin-top: 5px; }
+        .prog-bg { width: 100%; height: 5px; background: rgba(0,0,0,0.1); border-radius: 10px; margin-top: 15px; position: relative; overflow: hidden; }
+        body.light-mode .prog-bg { background: rgba(0,0,0,0.05); }
+        .prog-fill { height: 100%; width: 0%; border-radius: 10px; transition: 1s cubic-bezier(0.4, 0, 0.2, 1); }
+
+        /* --- COMMAND GRID --- */
+        .cmd-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 20px; }
+
+        .mood-container {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; justify-items: center; align-items: center; flex-grow: 1;
+        }
+
+        .btn-mood {
+            width: 50px; height: 50px; border-radius: 50%; border: 1px solid var(--border-glass);
+            background: rgba(255,255,255,0.04); color: var(--text-muted);
+            display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+            cursor: pointer; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        body.light-mode .btn-mood { background: rgba(0,0,0,0.03); }
+
+        .btn-mood.active-happy { background: var(--success); color: white; box-shadow: 0 0 15px var(--success); border-color: var(--success); }
+        .btn-mood.active-angry { background: var(--danger); color: white; box-shadow: 0 0 15px var(--danger); border-color: var(--danger); }
+        .btn-mood.active-curious { background: var(--info); color: white; box-shadow: 0 0 15px var(--info); border-color: var(--info); }
+        .btn-mood.active-sleepy { background: var(--purple); color: white; box-shadow: 0 0 15px var(--purple); border-color: var(--purple); }
+
+        .mood-label { font-size: 0.55rem; font-weight: 800; color: var(--text-muted); margin-top: 6px; text-transform: uppercase; font-family: 'Orbitron'; }
+
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; flex-grow: 1; }
+        .btn-small { background: rgba(255,255,255,0.04); border: 1px solid var(--border-glass); border-radius: 12px; padding: 12px; color: var(--text-muted); font-family: 'Orbitron'; font-size: 0.6rem; font-weight: 700; cursor: pointer; transition: 0.2s; width: 100%; }
+        body.light-mode .btn-small { background: rgba(0,0,0,0.03); }
+        .btn-small.active-mode { background: var(--success); color: white; border-color: var(--success); }
+        
+        input[type="text"] { width: 100%; background: rgba(0, 0, 0, 0.2); border: 1px solid var(--border-glass); padding: 14px; border-radius: 14px; color: var(--text-main); outline: none; margin-bottom: 10px; font-family: inherit; }
+        body.light-mode input[type="text"] { background: rgba(255, 255, 255, 0.9); }
+        .btn-action { background: var(--accent); border: none; color: white; padding: 14px; border-radius: 14px; font-weight: 800; text-transform: uppercase; cursor: pointer; font-family: 'Orbitron'; font-size: 0.75rem; width: 100%; }
+
+        .voice-hub { display: flex; flex-direction: column; align-items: center; justify-content: center; flex-grow: 1; }
+        .mic-btn {
+            width: 75px; height: 75px; background: var(--accent); border: none; border-radius: 50%; color: white; font-size: 1.6rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3); transition: 0.3s;
+        }
+        .mic-btn.active { background: var(--danger); animation: pulse-red 1.5s infinite; box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3); }
+        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+
+        .nav-hub { display: flex; align-items: center; justify-content: center; flex-grow: 1; }
+        .d-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: fit-content; }
+        .btn-ui { width: 58px; height: 58px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border-glass); border-radius: 16px; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; transition: 0.2s; }
+        body.light-mode .btn-ui { background: rgba(0,0,0,0.03); }
+        .btn-ui:hover { background: var(--accent); color: white; transform: scale(1.05); }
+
+        .terminal { background: rgba(0,0,0,0.4); border-radius: 20px; padding: 20px; height: 100%; min-height: 240px; overflow-y: auto; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--success); direction: ltr; }
+        body.light-mode .terminal { background: #0f172a; color: #10b981; }
+
+        /* --- AI CHAT --- */
+        .ai-chat-layout { display: grid; grid-template-columns: 300px 1fr; gap: 20px; height: 70vh; }
+        .ai-sidebar { display: flex; flex-direction: column; gap: 15px; }
+        .ai-status-card { padding: 20px; border-radius: 20px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-glass); }
+        body.light-mode .ai-status-card { background: rgba(0,0,0,0.02); }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); display: inline-block; margin-right: 8px; box-shadow: 0 0 10px var(--success); }
+        .chat-main { display: flex; flex-direction: column; height: 100%; position: relative; }
+        .chat-messages { flex-grow: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 15px; }
+        .msg { max-width: 85%; padding: 14px 20px; border-radius: 22px; font-size: 0.95rem; line-height: 1.6; }
+        .msg.ai { align-self: flex-start; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); border-bottom-left-radius: 4px; color: var(--text-main); }
+        .msg.user { align-self: flex-end; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-glass); border-bottom-right-radius: 4px; color: var(--text-main); }
+        body.light-mode .msg.user { background: rgba(0,0,0,0.05); }
+        .typing { font-size: 0.8rem; color: var(--accent); margin-bottom: 10px; display: none; font-weight: 700; }
+        .chat-input-wrapper { display: flex; gap: 12px; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 100px; border: 1px solid var(--border-glass); align-items: center; padding-left: 20px; }
+        body.light-mode .chat-input-wrapper { background: white; }
+        .chat-input-wrapper input { flex-grow: 1; background: transparent; border: none; color: var(--text-main); outline: none; }
+
+        /* --- Intel --- */
+        .team-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 20px; }
+        .member-card { text-align: center; padding: 25px 15px; border-radius: 24px; }
+        .avatar { width: 50px; height: 50px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-glass); border-radius: 15px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 800; color: var(--accent); }
+        body.light-mode .avatar { background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .member-name { font-family: 'Orbitron', sans-serif; font-size: 0.85rem; font-weight: 700; color: var(--text-main); }
+
+        .cta-btn { background: #fff; color: #000; padding: 18px 50px; border-radius: 100px; font-weight: 900; text-transform: uppercase; cursor: pointer; border: none; font-family: 'Orbitron'; letter-spacing: 1px; transition: 0.3s; }
+        body.light-mode .cta-btn { background: var(--accent); color: white; }
+        .cta-btn:hover { transform: scale(1.05); box-shadow: 0 10px 30px rgba(59, 130, 246, 0.2); }
+
+        @media (max-width: 1100px) {
+            .telemetry-grid, .cmd-grid { grid-template-columns: 1fr; }
+            .featured { grid-column: span 1; }
+            div[style*="grid-column: span"] { grid-column: span 12 !important; }
+            .ai-chat-layout { grid-template-columns: 1fr; }
+            .ai-sidebar { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="nav-link active" onclick="navigate('home', this)">Core</div>
+        <div class="nav-link" onclick="navigate('telemetry', this)">Telemetry</div>
+        <div class="nav-link" onclick="navigate('dash', this)">Command</div>
+        <div class="nav-link" onclick="navigate('chat-ai', this)">AI Chat</div>
+        <div class="nav-link" onclick="navigate('about', this)">Intel</div>
+        <div class="theme-toggle" onclick="toggleTheme()" id="themeBtn">
+            <i class="fa-solid fa-moon"></i>
+        </div>
+    </nav>
+
+    <main>
+        <!-- 1. HOME SECTION -->
+        <div id="home" class="page-section active">
+            <div style="text-align: center; max-width: 800px; margin: 80px auto;">
+                <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(34, 197, 94, 0.1); color: #4ade80; padding: 6px 14px; border-radius: 50px; font-size: 0.7rem; font-weight: 800; margin-bottom: 25px;">
+                    <div style="width: 6px; height: 6px; background: #4ade80; border-radius: 50%;"></div> SYSTEM READY
+                </div>
+                <h1 style="font-family: 'Orbitron', sans-serif; font-size: clamp(2.5rem, 8vw, 4.5rem); line-height: 1; margin-bottom: 25px; background: linear-gradient(to bottom, var(--text-main), var(--text-muted)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">COSMO <br>COMMAND</h1>
+                <p style="color: var(--text-muted); font-size: 1.25rem; line-height: 1.6; margin-bottom: 45px;">The ultimate neural interface for autonomous robotics. Real-time sensor fusion, direct LCD bridging, and edge-optimized control logic.</p>
+                <button class="cta-btn" onclick="navigate('telemetry', document.querySelectorAll('.nav-link')[1])">GO TO DASHBOARD</button>
+            </div>
+        </div>
+
+        <!-- 2. TELEMETRY SECTION -->
+        <div id="telemetry" class="page-section">
+            <div class="telemetry-grid">
+                <div class="sensor-card featured">
+                    <div class="sensor-top">
+                        <div class="sensor-info"><span class="sensor-label">Obstacle Proximity</span><span class="sensor-value" id="s-dist">-- cm</span></div>
+                        <div class="sensor-icon" style="color:#3b82f6;"><i class="fa-solid fa-ruler-horizontal"></i></div>
+                    </div>
+                    <div class="prog-bg"><div id="bar-dist" class="prog-fill" style="background:#3b82f6;"></div></div>
+                </div>
+                <div class="sensor-card">
+                    <div class="sensor-top">
+                        <div class="sensor-info"><span class="sensor-label">Motion Engine</span><span class="sensor-value" id="s-motion">IDLE</span></div>
+                        <div class="sensor-icon" style="color:#10b981;"><i class="fa-solid fa-person-running"></i></div>
+                    </div>
+                    <div class="prog-bg"><div id="bar-motion" class="prog-fill" style="background:#10b981;"></div></div>
+                </div>
+                <div class="sensor-card">
+                    <div class="sensor-top">
+                        <div class="sensor-info"><span class="sensor-label">Core Temp</span><span class="sensor-value" id="s-temp">--°C</span></div>
+                        <div class="sensor-icon" style="color:#f97316;"><i class="fa-solid fa-temperature-low"></i></div>
+                    </div>
+                    <div class="prog-bg"><div id="bar-temp" class="prog-fill" style="background:#f97316;"></div></div>
+                </div>
+                <div class="sensor-card">
+                    <div class="sensor-top">
+                        <div class="sensor-info"><span class="sensor-label">CO2 Level</span><span class="sensor-value" id="s-co2">-- ppm</span></div>
+                        <div class="sensor-icon" style="color:#a855f7;"><i class="fa-solid fa-wind"></i></div>
+                    </div>
+                    <div class="prog-bg"><div id="bar-co2" class="prog-fill" style="background:#a855f7;"></div></div>
+                </div>
+                <div class="sensor-card">
+                    <div class="sensor-top">
+                        <div class="sensor-info"><span class="sensor-label">Humidity</span><span class="sensor-value" id="s-hum">-- %</span></div>
+                        <div class="sensor-icon" style="color:#0ea5e9;"><i class="fa-solid fa-droplet"></i></div>
+                    </div>
+                    <div class="prog-bg"><div id="bar-hum" class="prog-fill" style="background:#0ea5e9;"></div></div>
+                </div>
+                <div class="sensor-card">
+                    <div class="sensor-top">
+                        <div class="sensor-info"><span class="sensor-label">Ambient Light</span><span class="sensor-value" id="s-light">-- %</span></div>
+                        <div class="sensor-icon" style="color:#eab308;"><i class="fa-solid fa-sun"></i></div>
+                    </div>
+                    <div class="prog-bg"><div id="bar-light" class="prog-fill" style="background:#eab308;"></div></div>
+                </div>
+                <div class="sensor-card featured">
+                    <div class="sensor-top">
+                        <div class="sensor-info"><span class="sensor-label">IMU Accelerometer</span><span class="sensor-value" id="s-accel">0, 0, 9.8</span></div>
+                        <div class="sensor-icon"><i class="fa-solid fa-compass"></i></div>
+                    </div>
+                    <div class="prog-bg"><div class="prog-fill" style="background:#64748b; width:100%;"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. COMMAND SECTION -->
+        <div id="dash" class="page-section">
+            <div class="cmd-grid">
+                <div style="grid-column: span 4;"><div class="panel"><div class="panel-title"><i class="fa-solid fa-desktop"></i> LCD Link</div><input type="text" id="lcdIn" placeholder="Display message..."><button class="btn-action" onclick="sendLCD()">Upload Text</button></div></div>
+                <div style="grid-column: span 4;">
+                    <div class="panel">
+                        <div class="panel-title"><i class="fa-solid fa-face-smile"></i> Robot Moods</div>
+                        <div class="mood-container">
+                            <div style="text-align:center;"><button class="btn-mood" onclick="setMood('HAPPY', this)"><i class="fa-solid fa-smile-beam"></i></button><span class="mood-label">Happy</span></div>
+                            <div style="text-align:center;"><button class="btn-mood" onclick="setMood('ANGRY', this)"><i class="fa-solid fa-angry"></i></button><span class="mood-label">Angry</span></div>
+                            <div style="text-align:center;"><button class="btn-mood" onclick="setMood('CURIOUS', this)"><i class="fa-solid fa-search"></i></button><span class="mood-label">Curious</span></div>
+                            <div style="text-align:center;"><button class="btn-mood" onclick="setMood('SLEEPY', this)"><i class="fa-solid fa-moon"></i></button><span class="mood-label">Sleepy</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div style="grid-column: span 4;"><div class="panel"><div class="panel-title"><i class="fa-solid fa-gears"></i> Protocols</div><div class="btn-grid"><button class="btn-small active-mode" onclick="setMode('MANUAL', this)">Manual</button><button class="btn-small" onclick="setMode('AUTO', this)">Auto</button><button class="btn-small" onclick="setMode('EXPLORE', this)">Explore</button><button class="btn-small" onclick="setMode('SENTRY', this)">Sentry</button></div></div></div>
+                
+                <div style="grid-column: span 6;"><div class="panel"><div class="panel-title"><i class="fa-solid fa-terminal"></i> Command Terminal</div><div class="terminal" id="logs">> UPLINK SECURE...</div></div></div>
+                
+                <div style="grid-column: span 3;">
+                    <div class="panel">
+                        <div class="panel-title"><i class="fa-solid fa-gamepad"></i> Override</div>
+                        <div class="nav-hub">
+                            <div class="d-pad">
+                                <div></div><button class="btn-ui" onclick="log('CMD: FWD')"><i class="fa-solid fa-chevron-up"></i></button><div></div>
+                                <button class="btn-ui" onclick="log('CMD: LFT')"><i class="fa-solid fa-chevron-left"></i></button>
+                                <button class="btn-ui" style="color:var(--danger)" onclick="log('CMD: STOP')"><i class="fa-solid fa-stop"></i></button>
+                                <button class="btn-ui" onclick="log('CMD: RGT')"><i class="fa-solid fa-chevron-right"></i></button>
+                                <div></div><button class="btn-ui" onclick="log('CMD: BWD')"><i class="fa-solid fa-chevron-down"></i></button><div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="grid-column: span 3;">
+                    <div class="panel">
+                        <div class="panel-title"><i class="fa-solid fa-microphone-lines"></i> Voice Link</div>
+                        <div class="voice-hub">
+                            <button class="mic-btn" id="micBtn" onclick="toggleMic()">
+                                <i class="fa-solid fa-microphone"></i>
+                            </button>
+                            <span style="margin-top: 20px; font-size: 0.6rem; color: var(--text-muted); font-family: 'Orbitron'; font-weight: 700;" id="micStatus">Standby</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. AI CHAT -->
+        <div id="chat-ai" class="page-section">
+            <div class="panel">
+                <div class="ai-chat-layout">
+                    <div class="ai-sidebar">
+                        <div class="ai-status-card"><div class="panel-title"><i class="fa-solid fa-microchip"></i> Core Status</div><div style="font-size:0.8rem;"><span class="status-dot"></span> Online</div><div style="margin-top:10px; font-size:0.7rem; color:var(--text-muted);">Neural Core v2.5<br>Latency: 42ms</div></div>
+                    </div>
+                    <div class="chat-main">
+                        <div class="chat-messages" id="chatLogs"><div class="msg ai">I am Cosmo's neural core. Ready for interaction.</div></div>
+                        <div class="typing" id="typingIndicator"><span>● ● ●</span> Cosmo is processing...</div>
+                        <div class="chat-input-wrapper">
+                            <input type="text" id="aiInput" placeholder="Message Neural Core..." onkeypress="if(event.key==='Enter') sendMessage()">
+                            <button class="cta-btn" style="padding:10px 25px; font-size:0.7rem; border-radius:50px;" onclick="sendMessage()">SEND</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. INTEL SECTION -->
+        <div id="about" class="page-section">
+            <div class="grid-layout">
+                <div style="grid-column: span 12;"><div class="panel" style="background:rgba(59, 130, 246, 0.05); text-align:center;"><div class="panel-title" style="justify-content:center;"><i class="fa-solid fa-robot"></i> Cosmo Robot Overview</div><p style="color:var(--text-muted); line-height:1.8; font-size:1.1rem; max-width:900px; margin:0 auto;">Cozmo is an AI-driven robotic companion with a personality shaped by interaction. Built with a high-fidelity sensor array and interactive OLED face, it processes real-time data to engage in complex autonomous behaviors.</p></div></div>
+                <div style="grid-column: span 12;"><h2 style="font-family:'Orbitron'; font-size:1.5rem; text-align:center; margin:30px 0 20px; background:linear-gradient(to right, #fff, var(--accent)); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">Mission Intelligence Team</h2><div class="team-grid"><div class="panel member-card"><div class="avatar">A</div><div class="member-name">Abdelrahman Othman</div></div><div class="panel member-card"><div class="avatar">M</div><div class="member-name">Mohamed Abo Salim</div></div><div class="panel member-card"><div class="avatar">A</div><div class="member-name">Abdelaziz Osama</div></div><div class="panel member-card"><div class="avatar">A</div><div class="member-name">Asmaa Amr</div></div><div class="panel member-card"><div class="avatar">Y</div><div class="member-name">Yasmin Ehab</div></div><div class="panel member-card"><div class="avatar">M</div><div class="member-name">Malak Abdelqawy</div></div></div></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const apiKey = ""; 
+
+        function toggleTheme() {
+            const isLight = document.body.classList.toggle('light-mode');
+            const icon = document.querySelector('#themeBtn i');
+            icon.className = isLight ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+        }
+
+        function navigate(id, el) {
+            document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            el.classList.add('active');
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+
+        function log(msg) {
+            const logs = document.getElementById('logs');
+            const now = new Date();
+            const time = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+            logs.innerHTML += `<br><span style="opacity: 0.4;">[${time}]</span> CMD_${msg} SENT.`;
+            logs.scrollTop = logs.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('aiInput');
+            const chatLogs = document.getElementById('chatLogs');
+            const typing = document.getElementById('typingIndicator');
+            const text = input.value.trim();
+            if(!text) return;
+
+            const uDiv = document.createElement('div'); uDiv.className = 'msg user'; uDiv.innerText = text;
+            chatLogs.appendChild(uDiv); input.value = ""; chatLogs.scrollTop = chatLogs.scrollHeight;
+
+            typing.style.display = 'block';
+            const aDiv = document.createElement('div'); aDiv.className = 'msg ai'; aDiv.innerText = "...";
+            chatLogs.appendChild(aDiv);
+
+            try {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+                const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: text }] }] }) });
+                const data = await res.json();
+                typing.style.display = 'none';
+                aDiv.innerText = data.candidates[0].content.parts[0].text;
+            } catch (err) { typing.style.display = 'none'; aDiv.innerText = "Connection lost."; }
+            chatLogs.scrollTop = chatLogs.scrollHeight;
+        }
+
+        function sendLCD() { const v = document.getElementById('lcdIn').value; if(v) { log(`LCD: "${v}"`); document.getElementById('lcdIn').value = ""; } }
+        
+        function setMood(mood, btn) {
+            document.querySelectorAll('.btn-mood').forEach(b => {
+                b.classList.remove('active-happy', 'active-angry', 'active-curious', 'active-sleepy');
+            });
+            btn.classList.add(`active-${mood.toLowerCase()}`);
+            log(`MOOD: ${mood}`);
+        }
+
+        function setMode(m, b) { document.querySelectorAll('[onclick^="setMode"]').forEach(x => x.classList.remove('active-mode')); b.classList.add('active-mode'); log(`PROTOCOL: ${m}`); }
+        
+        let isL = false;
+        function toggleMic() { 
+            const b = document.getElementById('micBtn'); 
+            const s = document.getElementById('micStatus');
+            isL = !isL; b.classList.toggle('active', isL); 
+            s.innerText = isL ? "LISTENING..." : "STANDBY";
+            s.style.color = isL ? "var(--danger)" : "var(--text-muted)";
+            log(isL ? 'VOICE: ACTIVE' : 'VOICE: SENT'); 
+        }
+
+        // --- FULL TELEMETRY SYNC LOOP ---
+        setInterval(() => {
+            if(document.getElementById('telemetry').classList.contains('active')) {
+                const dV = Math.floor(20 + Math.random() * 180);
+                document.getElementById('s-dist').innerText = dV + " cm";
+                document.getElementById('bar-dist').style.width = (dV / 200 * 100) + "%";
+
+                const tV = (22 + Math.random() * 8).toFixed(1);
+                document.getElementById('s-temp').innerText = tV + "°C";
+                document.getElementById('bar-temp').style.width = (tV / 40 * 100) + "%";
+
+                const cV = Math.floor(380 + Math.random() * 70);
+                document.getElementById('s-co2').innerText = cV + " ppm";
+                document.getElementById('bar-co2').style.width = (cV / 800 * 100) + "%";
+
+                const hV = Math.floor(35 + Math.random() * 25);
+                document.getElementById('s-hum').innerText = hV + " %";
+                document.getElementById('bar-hum').style.width = hV + "%";
+
+                const lV = Math.floor(10 + Math.random() * 90);
+                document.getElementById('s-light').innerText = lV + " %";
+                document.getElementById('bar-light').style.width = lV + "%";
+                
+                const motionText = document.getElementById('s-motion');
+                const motionBar = document.getElementById('bar-motion');
+                if(Math.random() > 0.8) {
+                    motionText.innerText = "ACTIVE"; motionText.style.color = "var(--warning)";
+                    motionBar.style.width = "100%";
+                    setTimeout(() => { motionText.innerText = "IDLE"; motionText.style.color = "var(--success)"; motionBar.style.width = "15%"; }, 1000);
+                } else {
+                    motionBar.style.width = "15%";
+                }
+            }
+        }, 1500);
+    </script>
+</body>
+</html>
